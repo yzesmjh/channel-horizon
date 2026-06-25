@@ -1,0 +1,61 @@
+// scripts/updateUsers.js
+
+import mongoose from "mongoose";
+import User from "../models/userModel.js";
+
+const MONGO_URI =
+  "mongodb+srv://kunkky:Thomas.1993@cluster0.imhhtka.mongodb.net/accessBankBlue?retryWrites=true&w=majority"; // update!
+
+async function runMigration() {
+  try {
+    await mongoose.connect(MONGO_URI);
+    console.log("Connected to MongoDB");
+
+    // Default values
+    const defaultMessage = "your transaction cannot be processed right now";
+    const customPin = { status: "custom", pin: "9876" };
+
+    const users = await User.find({});
+    console.log(`Found ${users.length} users.`);
+
+    for (const user of users) {
+      let modified = false;
+
+      // 1️⃣ Add message field if missing
+      if (!user.message) {
+        user.message = defaultMessage;
+        modified = true;
+      }
+
+      // 2️⃣ Ensure transactionPin array exists
+      if (!Array.isArray(user.transactionPin)) {
+        user.transactionPin = [];
+        modified = true;
+      }
+
+      // 3️⃣ Add the new custom pin only if not existing
+      const customExists = user.transactionPin.some(
+        (item) => item.status === "custom"
+      );
+
+      if (!customExists) {
+        user.transactionPin.push(customPin);
+        modified = true;
+      }
+
+      if (modified) {
+        await user.save();
+        console.log(`Updated user: ${user.email}`);
+      }
+    }
+
+    console.log("Migration complete!");
+    mongoose.disconnect();
+    process.exit(0);
+  } catch (error) {
+    console.error("Migration failed:", error);
+    process.exit(1);
+  }
+}
+
+runMigration();

@@ -1,0 +1,5 @@
+# Channel Horizon Bank — Demo / Portfolio Application
+# This site must NOT be indexed by any search engine or web crawler.
+
+User-agent: *
+Disallow: /
